@@ -1,0 +1,48 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.19.0' # หรือเวอร์ชันที่ Flet รองรับล่าสุด
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install flet requests
+          # ติดตั้ง build tools ของ Flet
+          dart pub global activate flet
+
+      - name: Build APK
+        # เปลี่ยน driver_mobile_app.py เป็นชื่อไฟล์ของคุณถ้ามีการเปลี่ยน
+        run: |
+          flet build apk driver_mobile_app.py --include-packages flet requests --verbose
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: driver-app-release
+          path: build/apk/app-release.apk
